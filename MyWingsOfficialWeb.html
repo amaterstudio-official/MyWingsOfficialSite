@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#00070a">
+  <title>MyWings — Open Source Flight Simulator</title>
+  <meta name="description" content="MyWings is an independent open-source flight simulator project developed in Unreal Engine 5.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-main: #00070a;
+      --bg-card: #081016;
+      --bg-card-hover: #0c1822;
+      --bg-modal: rgba(0, 7, 10, .94);
+      --border-color: #162832;
+      --border-focus: #0077ee;
+      --blue-primary: #0077ee;
+      --blue-bright: #00a3ee;
+      --blue-light: #66b5ff;
+      --blue-bg-glow: rgba(0, 119, 238, .15);
+      --text-main: #f7fbff;
+      --text-muted: #a4b0bd;
+      --text-dim: #74818e;
+      --radius: 18px;
+      --content-width: 1160px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 86px; }
+    body {
+      margin: 0; background: var(--bg-main); color: var(--text-main);
+      font-family: "Google Sans", system-ui, sans-serif; line-height: 1.65;
+      overflow-x: hidden; -webkit-font-smoothing: antialiased;
+    }
+    body.modal-open { overflow: hidden; }
+    a { color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; }
+    img { display: block; max-width: 100%; }
+    .mw-container { width: min(var(--content-width), calc(100% - 40px)); margin-inline: auto; }
+    .material-symbols-outlined { font-size: 20px; line-height: 1; vertical-align: middle; font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24; }
+
+    .mw-header {
+      position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between;
+      align-items: center; gap: 24px; padding: 14px max(24px, calc((100vw - var(--content-width))/2));
+      background: rgba(0, 7, 10, .82); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .mw-header-logo { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
+    .mw-logo-mark {
+      display: grid; place-items: center; width: 35px; height: 35px; border-radius: 11px;
+      color: white; background: linear-gradient(145deg, var(--blue-primary), var(--blue-bright));
+      box-shadow: 0 0 24px rgba(0, 119, 238, .25);
+    }
+    .mw-logo-text { font-weight: 800; font-size: 1.12rem; letter-spacing: 1.8px; }
+    .mw-nav { display: flex; align-items: center; gap: clamp(14px, 2.4vw, 28px); }
+    .mw-nav-link { color: var(--text-muted); text-decoration: none; font-size: .94rem; transition: color .2s ease; }
+    .mw-nav-link:hover, .mw-nav-link:focus-visible { color: var(--blue-bright); }
+    .mw-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+      min-height: 44px; padding: 10px 20px; border: 1px solid transparent; border-radius: 999px;
+      font-weight: 650; font-size: .94rem; text-decoration: none; cursor: pointer;
+      transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease, background .22s ease;
+    }
+    .mw-btn:hover { transform: translateY(-2px); }
+    .mw-btn:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 3px; }
+    .mw-btn-primary { background: linear-gradient(135deg, var(--blue-primary), var(--blue-bright)); color: #fff; border-color: rgba(0,163,238,.7); box-shadow: 0 5px 22px rgba(0,119,238,.22); }
+    .mw-btn-primary:hover { box-shadow: 0 8px 30px rgba(0,163,238,.35); }
+    .mw-btn-secondary { background: rgba(255,255,255,.035); color: var(--text-main); border-color: var(--border-color); }
+    .mw-btn-secondary:hover { background: rgba(255,255,255,.075); border-color: #2b4657; }
+    .mw-btn-lg { min-height: 52px; padding: 13px 25px; font-size: 1rem; }
+    .mw-hero {
+      min-height: min(760px, calc(100svh - 65px)); display: grid; place-items: center; text-align: center;
+      padding: 100px 20px 110px; position: relative; isolation: isolate; overflow: hidden;
+      background: radial-gradient(ellipse at 50% 36%, rgba(0, 82, 155, .24), transparent 52%),
+                  linear-gradient(180deg, rgba(0, 7, 10, .1), var(--bg-main));
+    }
+    .mw-hero::before {
+      content: ""; position: absolute; z-index: -1; inset: 0;
+      display: none;
+    }
+    .mw-hero-content { max-width: 900px; animation: rise-in .8s cubic-bezier(.2,.7,.2,1) both; }
+    .mw-hero-subtitle { display: inline-flex; align-items: center; gap: 9px; color: var(--blue-bright); font-weight: 700; letter-spacing: 2.2px; text-transform: uppercase; font-size: .78rem; margin-bottom: 20px; }
+    .mw-hero-title { font-size: clamp(2.65rem, 6.5vw, 5.3rem); line-height: 1.04; letter-spacing: -.055em; font-weight: 800; margin: 0 0 24px; }
+    .mw-text-gradient { background: linear-gradient(95deg, #fff 5%, #9bdcff 48%, var(--blue-bright) 100%); background-clip: text; -webkit-background-clip: text; color: transparent; }
+    .mw-hero-description { max-width: 710px; margin: 0 auto 32px; color: var(--text-muted); font-size: clamp(1rem, 2vw, 1.15rem); }
+    .mw-hero-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 13px; }
+    .mw-hero-meta { display: flex; justify-content: center; flex-wrap: wrap; gap: 18px 25px; margin-top: 34px; color: var(--text-dim); font-size: .85rem; }
+    .mw-hero-meta span { display: inline-flex; align-items: center; gap: 7px; }
+    .mw-hero-meta .bi { color: var(--blue-bright); }
+    .mw-section { padding: 88px 0; }
+    .mw-section-heading { max-width: 720px; margin: 0 auto 42px; text-align: center; }
+    .mw-eyebrow { color: var(--blue-bright); text-transform: uppercase; letter-spacing: 1.8px; font-size: .76rem; font-weight: 700; margin: 0 0 9px; }
+    .mw-section-title { font-size: clamp(1.9rem, 4vw, 2.7rem); letter-spacing: -.035em; line-height: 1.15; margin: 0 0 13px; }
+    .mw-section-subtitle { color: var(--text-muted); font-size: 1.02rem; margin: 0; }
+    .mw-about { text-align: center; }
+    .mw-about-copy { max-width: 790px; margin: 0 auto; color: var(--text-muted); font-size: 1.04rem; }
+    .mw-features, .mw-download { background: #040b10; border-block: 1px solid var(--border-color); }
+    .mw-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+    .mw-card { background: linear-gradient(145deg, rgba(11,24,33,.96), rgba(5,13,18,.96)); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 28px; text-align: left; min-width: 0; transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease; }
+    .mw-card:hover { transform: translateY(-4px); border-color: rgba(0,119,238,.7); box-shadow: 0 15px 38px rgba(0,0,0,.2), 0 0 24px rgba(0,119,238,.07); }
+    .mw-card-icon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 13px; margin-bottom: 22px; background: var(--blue-bg-glow); color: var(--blue-bright); font-size: 1.25rem; }
+    .mw-card-title { font-size: 1.16rem; line-height: 1.35; margin: 0 0 10px; }
+    .mw-card-text { color: var(--text-muted); font-size: .94rem; margin: 0; }
+    .mw-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .mw-card-header .mw-card-title { margin: 0; }
+    .mw-badge { display: inline-flex; align-items: center; white-space: nowrap; padding: 5px 9px; border-radius: 999px; font-size: .68rem; line-height: 1.35; font-weight: 700; text-transform: uppercase; letter-spacing: .45px; }
+    .mw-badge-version, .mw-badge-success { color: #64d8b0; background: rgba(31,190,130,.1); border: 1px solid rgba(31,190,130,.24); }
+    .mw-badge-warning { color: #f1c878; background: rgba(241,200,120,.09); border: 1px solid rgba(241,200,120,.22); }
+    .mw-fleet-note { color: var(--text-dim); font-size: .83rem; margin: 25px 0 0; text-align: center; }
+    .mw-gallery { display: grid; grid-template-columns: 1.3fr 1fr 1fr; grid-auto-rows: 220px; gap: 14px; }
+    .mw-gallery-item { position: relative; overflow: hidden; border: 1px solid var(--border-color); border-radius: 15px; background: #07131b; cursor: pointer; padding: 0; text-align: left; }
+    .mw-gallery-item:first-child { grid-row: span 2; }
+    .mw-gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease, opacity .3s ease; opacity: .83; }
+    .mw-gallery-item:hover img { transform: scale(1.045); opacity: 1; }
+    .mw-gallery-item::after { content: ""; position: absolute; inset: 35% 0 0; background: linear-gradient(transparent, rgba(0,0,0,.82)); pointer-events: none; }
+    .mw-gallery-caption { position: absolute; z-index: 1; left: 17px; right: 17px; bottom: 14px; color: white; font-weight: 650; font-size: .93rem; }
+    .mw-download-box { display: flex; align-items: center; justify-content: space-between; gap: 30px; padding: clamp(24px, 4vw, 42px); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; }
+    .mw-download-info h3 { margin: 0 0 9px; font-size: 1.35rem; }
+    .mw-download-info p { margin: 4px 0; color: var(--text-muted); font-size: .92rem; }
+    .mw-download-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .mw-footer { background: #010406; border-top: 1px solid var(--border-color); padding: 58px 0 25px; }
+    .mw-footer-content { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 45px; padding-bottom: 42px; }
+    .mw-footer-brand { flex: 1 1 260px; max-width: 390px; }
+    .mw-footer-brand h2 { margin: 0 0 10px; font-size: 1.35rem; letter-spacing: 1px; }
+    .mw-footer-brand p { color: var(--text-dim); font-size: .92rem; margin: 0; }
+    .mw-footer-links { display: flex; flex-wrap: wrap; gap: 55px; }
+    .mw-footer-col h4 { margin: 0 0 13px; font-size: .92rem; }
+    .mw-footer-col ul { list-style: none; padding: 0; margin: 0; }
+    .mw-footer-col li { margin: 7px 0; }
+    .mw-footer-col a, .mw-copyright a { color: var(--text-muted); text-decoration: none; font-size: .9rem; transition: color .2s ease; }
+    .mw-footer-col a:hover, .mw-copyright a:hover { color: var(--blue-bright); }
+    .mw-footer-bottom { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; border-top: 1px solid #111a21; padding-top: 22px; color: var(--text-dim); font-size: .8rem; }
+    .mw-disclaimer { margin: 0; max-width: 650px; }
+    .mw-copyright { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+
+    .mw-modal { position: fixed; z-index: 2000; inset: 0; display: none; align-items: center; justify-content: center; padding: 22px; background: var(--bg-modal); backdrop-filter: blur(15px); overflow-y: auto; animation: fade-in .22s ease both; }
+    .mw-modal.is-open { display: flex; }
+    .mw-modal-content { position: relative; width: min(650px, 100%); max-height: min(88svh, 900px); overflow-y: auto; padding: clamp(24px, 4vw, 38px); background: #081219; border: 1px solid #20313c; border-radius: 20px; box-shadow: 0 25px 80px rgba(0,0,0,.65), 0 0 45px rgba(0,119,238,.08); animation: modal-rise .25s ease both; }
+    .mw-modal-wide { width: min(1000px, 100%); }
+    .mw-modal-close { position: absolute; top: 15px; right: 15px; display: grid; place-items: center; width: 39px; height: 39px; border: 1px solid var(--border-color); border-radius: 50%; color: var(--text-muted); background: rgba(255,255,255,.04); cursor: pointer; }
+    .mw-modal-close:hover { color: white; background: rgba(255,255,255,.1); }
+    .mw-modal-title { margin: 0 45px 8px 0; font-size: clamp(1.5rem, 4vw, 2rem); line-height: 1.2; }
+    .mw-modal-intro { color: var(--text-muted); margin: 0 0 25px; font-size: .94rem; }
+    .mw-version-card { padding: 22px; background: #040b10; border: 1px solid var(--border-color); border-radius: 14px; }
+    .mw-version-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; }
+    .mw-version-header h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0; font-size: 1.08rem; }
+    .mw-version-date { color: var(--text-dim); font-size: .83rem; margin: 0 0 8px; }
+    .mw-modal-note { margin: 17px 0 0; color: var(--text-dim); font-size: .82rem; }
+    .mw-progress-view, .mw-success-view { text-align: center; }
+    .mw-icon-success { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 50%; color: var(--blue-bright); background: var(--blue-bg-glow); border: 1px solid rgba(0,163,238,.35); box-shadow: 0 0 28px rgba(0,163,238,.12); font-size: 1.5rem; }
+    .mw-countdown-number { margin: 12px 0; color: var(--blue-bright); font-size: clamp(3.5rem, 12vw, 4.5rem); line-height: 1.1; font-weight: 800; text-shadow: 0 0 25px rgba(0,119,238,.35); animation: pulse 1s ease-in-out infinite alternate; font-variant-numeric: tabular-nums; }
+    .mw-progress-track { width: 100%; height: 5px; border-radius: 99px; margin: 22px 0; overflow: hidden; background: #13232e; }
+    .mw-progress-bar { height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, var(--blue-primary), var(--blue-bright)); transition: width .25s linear; }
+    .mw-instructions-box { text-align: left; margin-top: 24px; padding: 19px; border: 1px solid var(--border-color); border-radius: 13px; background: #040b10; }
+    .mw-instructions-box h3 { margin: 0 0 13px; color: var(--blue-bright); font-size: .78rem; letter-spacing: 1px; text-transform: uppercase; }
+    .mw-instructions-box ol { list-style: none; padding: 0; margin: 0; }
+    .mw-instructions-box li { display: flex; align-items: flex-start; gap: 11px; margin: 10px 0; color: var(--text-muted); font-size: .9rem; }
+    .mw-step { display: grid; place-items: center; flex: 0 0 24px; height: 24px; border-radius: 7px; color: var(--blue-bright); background: var(--blue-bg-glow); border: 1px solid rgba(0,163,238,.25); font-size: .76rem; font-weight: 700; }
+    .mw-video-frame { aspect-ratio: 16 / 9; width: 100%; overflow: hidden; border: 1px solid var(--border-color); border-radius: 14px; background: #020609; }
+    .mw-video-frame iframe { width: 100%; height: 100%; border: 0; }
+    .mw-video-placeholder { display: grid; place-items: center; text-align: center; height: 100%; min-height: 220px; padding: 25px; color: var(--text-muted); }
+    .mw-video-placeholder .bi { color: var(--blue-bright); font-size: 2.4rem; margin-bottom: 12px; }
+    .mw-video-placeholder p { max-width: 460px; margin: 0; }
+    .mw-lightbox-image { width: 100%; max-height: 70svh; object-fit: contain; border-radius: 12px; background: #020609; }
+    .mw-lightbox-caption { color: var(--text-muted); margin: 12px 0 0; }
+    .mw-toast { position: fixed; z-index: 3000; left: 50%; bottom: 24px; transform: translate(-50%, 15px); opacity: 0; pointer-events: none; padding: 11px 16px; border: 1px solid var(--border-color); border-radius: 999px; background: #0b1720; color: var(--text-main); font-size: .9rem; transition: opacity .2s ease, transform .2s ease; }
+    .mw-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+    .mw-reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+    .mw-reveal.is-visible { opacity: 1; transform: translateY(0); }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes modal-rise { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes rise-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { from { opacity: .78; transform: scale(1); } to { opacity: 1; transform: scale(1.035); } }
+
+    @media (max-width: 850px) {
+      .mw-header { padding-inline: 20px; }
+      .mw-nav { gap: 14px; }
+      .mw-nav-link { font-size: .85rem; }
+      .mw-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .mw-gallery { grid-template-columns: 1fr 1fr; grid-auto-rows: 190px; }
+      .mw-gallery-item:first-child { grid-row: span 1; }
+      .mw-download-box { align-items: flex-start; flex-direction: column; }
+    }
+    @media (max-width: 767px) {
+      .mw-nav { display: none; }
+    }
+    @media (max-width: 620px) {
+      .mw-header { flex-wrap: nowrap; padding: 10px 14px; gap: 10px; }
+      .mw-header-logo { gap: 8px; }
+      .mw-logo-mark { width: 32px; height: 32px; }
+      .mw-logo-text { font-size: 1rem; letter-spacing: 1.2px; }
+      .mw-header > .mw-btn { padding: 8px 13px; min-height: 39px; font-size: .82rem; }
+      .mw-container { width: min(var(--content-width), calc(100% - 28px)); }
+      .mw-section-heading { padding-inline: 2px; }
+      .mw-hero { min-height: auto; padding: 72px 16px 76px; background: radial-gradient(ellipse at 50% 36%, rgba(0, 82, 155, .20), transparent 60%); }
+      .mw-hero-title { font-size: clamp(2.5rem, 12vw, 3.6rem); }
+      .mw-hero-actions { flex-direction: column; align-items: stretch; width: 100%; max-width: 330px; margin-inline: auto; }
+      .mw-hero-actions .mw-btn { width: 100%; }
+      .mw-hero-meta { gap: 10px 16px; font-size: .78rem; }
+      .mw-section { padding: 65px 0; }
+      .mw-grid { grid-template-columns: 1fr; gap: 14px; }
+      .mw-card { padding: 23px; }
+      .mw-card-header { flex-direction: column; }
+      .mw-gallery { grid-template-columns: 1fr 1fr; grid-auto-rows: 150px; gap: 9px; }
+      .mw-gallery-item:first-child { grid-column: span 2; }
+      .mw-gallery-caption { left: 11px; bottom: 10px; font-size: .82rem; }
+      .mw-download-actions { width: 100%; flex-direction: column; }
+      .mw-download-actions .mw-btn { width: 100%; }
+      .mw-footer-content { gap: 30px; }
+      .mw-footer-links { gap: 35px; }
+      .mw-footer-bottom { flex-direction: column; }
+      .mw-modal { padding: 12px; align-items: center; }
+      .mw-modal-content { max-height: 92svh; padding: 23px 18px; border-radius: 16px; }
+      .mw-version-header { align-items: flex-start; flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      .mw-reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body id="top">
+  <!-- Project settings: update the repository, installer, and trailer URLs in MYWINGS_CONFIG at the end of this file. -->
+  <header class="mw-header">
+    <a class="mw-header-logo" href="#top" aria-label="MyWings — home page">
+      <span class="mw-logo-text">MYWINGS</span>
+    </a>
+    <nav class="mw-nav" aria-label="Main navigation">
+      <a href="#about" class="mw-nav-link">About</a>
+      <a href="#features" class="mw-nav-link">Features</a>
+      <a href="#fleet" class="mw-nav-link">Fleet</a>
+      <a href="#gallery" class="mw-nav-link">Gallery</a>
+      <a href="#download" class="mw-nav-link">Download</a>
+    </nav>
+    <button class="mw-btn mw-btn-primary" type="button" data-open="versions-modal">
+      <span class="material-symbols-outlined">download</span><span>Get MyWings</span>
+    </button>
+  </header>
+
+  <main>
+    <section class="mw-hero">
+      <div class="mw-hero-content">
+        <span class="mw-hero-subtitle">Amater Studio Presents</span>
+        <h1 class="mw-hero-title">Open Source<br><span class="mw-text-gradient">Flight Simulator</span></h1>
+        <p class="mw-hero-description">MyWings is an independent open-source flight simulator project developed in Unreal Engine 5. Its goal is to deliver detailed flight physics, immersive environments, and the freedom to explore the world from the cockpit.</p>
+        <div class="mw-hero-actions">
+          <button class="mw-btn mw-btn-primary mw-btn-lg" type="button" data-open="versions-modal"><span class="material-symbols-outlined">download</span>Choose version</button>
+          <button class="mw-btn mw-btn-secondary mw-btn-lg" type="button" data-open="trailer-modal"><span class="bi bi-play-circle"></span>Watch trailer</button>
+          <a class="mw-btn mw-btn-secondary mw-btn-lg" href="https://github.com/" target="_blank" rel="noopener noreferrer" data-config-link="repo"><i class="bi bi-github"></i>GitHub Repository</a>
+        </div>
+        <div class="mw-hero-meta">
+          <span><i class="bi bi-code-slash"></i> Open source</span>
+          <span><i class="bi bi-controller"></i> Unreal Engine 5</span>
+          <span><i class="bi bi-airplane"></i> Built for aviation fans</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="mw-section mw-about" id="about">
+      <div class="mw-container mw-reveal">
+        <div class="mw-section-heading">
+          <p class="mw-eyebrow">The project</p>
+          <h2 class="mw-section-title">About MyWings</h2>
+          <p class="mw-section-subtitle">Built with passion for next-gen flight simulation.</p>
+        </div>
+        <p class="mw-about-copy">MyWings is built from the ground up in Unreal Engine 5. The project focuses on an accessible, realistic, and customizable simulator for aviation enthusiasts. It is an independent project in development, so features and aircraft may change between versions.</p>
+      </div>
+    </section>
+
+    <section class="mw-section mw-features" id="features">
+      <div class="mw-container">
+        <div class="mw-section-heading mw-reveal">
+          <p class="mw-eyebrow">What makes it fly</p>
+          <h2 class="mw-section-title">Key Features</h2>
+          <p class="mw-section-subtitle">The technology and features behind the project.</p>
+        </div>
+        <div class="mw-grid">
+          <article class="mw-card mw-reveal"><div class="mw-card-icon"><i class="bi bi-cpu"></i></div><h3 class="mw-card-title">Advanced Aerodynamics</h3><p class="mw-card-text">A custom flight physics system focused on lift, drag, and aircraft behavior in flight.</p></article>
+          <article class="mw-card mw-reveal"><div class="mw-card-icon"><i class="bi bi-globe-americas"></i></div><h3 class="mw-card-title">Cesium World Integration</h3><p class="mw-card-text">Cesium geographic data for large-scale environments and world exploration.</p></article>
+          <article class="mw-card mw-reveal"><div class="mw-card-icon"><i class="bi bi-geo-alt"></i></div><h3 class="mw-card-title">Innsbruck Airport (LOWI)</h3><p class="mw-card-text">Innsbruck Airport as one of the main locations for flying.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="mw-section" id="fleet">
+      <div class="mw-container">
+        <div class="mw-section-heading mw-reveal">
+          <p class="mw-eyebrow">Aircraft</p>
+          <h2 class="mw-section-title">Aircraft Fleet</h2>
+          <p class="mw-section-subtitle">Aircraft overview based on the current development roadmap.</p>
+        </div>
+        <div class="mw-grid">
+          <article class="mw-card mw-reveal"><div class="mw-card-header"><h3 class="mw-card-title">Cessna 172 Skyhawk</h3><span class="mw-badge mw-badge-success">Pre-Alpha</span></div><p class="mw-card-text">The primary light aircraft for the first build, focusing on basic flight modeling, instruments, and ground handling.</p></article>
+          <article class="mw-card mw-reveal"><div class="mw-card-header"><h3 class="mw-card-title">Airbus A320 CEO/NEO</h3><span class="mw-badge mw-badge-warning">In Progress</span></div><p class="mw-card-text">A planned airliner. Systems and fly-by-wire are part of future development.</p></article>
+          <article class="mw-card mw-reveal"><div class="mw-card-header"><h3 class="mw-card-title">Boeing 737-800</h3><span class="mw-badge mw-badge-warning">Planned</span></div><p class="mw-card-text">A narrow-body airliner being considered for future project milestones.</p></article>
+        </div>
+        <p class="mw-fleet-note">Aircraft status may change as development progresses.</p>
+      </div>
+    </section>
+
+    <section class="mw-section mw-features" id="gallery">
+      <div class="mw-container">
+        <div class="mw-section-heading mw-reveal">
+          <p class="mw-eyebrow">Visuals</p>
+          <h2 class="mw-section-title">Gallery</h2>
+          <p class="mw-section-subtitle">Select an image to view it at a larger size. These sample photos can later be replaced with screenshots from the game.</p>
+        </div>
+        <div class="mw-gallery mw-reveal">
+          <button class="mw-gallery-item" type="button" data-image="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1500&q=85" data-caption="Above the clouds" aria-label="Open image: Above the clouds">
+            <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1000&q=80" alt="Aircraft above the clouds" loading="lazy"><span class="mw-gallery-caption">Above the clouds</span>
+          </button>
+          <button class="mw-gallery-item" type="button" data-image="https://images.unsplash.com/photo-1474302770737-173ee21bab63?auto=format&fit=crop&w=1500&q=85" data-caption="Aircraft in flight" aria-label="Open image: Aircraft in flight">
+            <img src="https://images.unsplash.com/photo-1474302770737-173ee21bab63?auto=format&fit=crop&w=800&q=80" alt="Airliner in flight" loading="lazy"><span class="mw-gallery-caption">Aircraft in flight</span>
+          </button>
+          <button class="mw-gallery-item" type="button" data-image="https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=1500&q=85" data-caption="Aviation details" aria-label="Open image: Aviation details">
+            <img src="https://images.unsplash.com/photo-1506947411487-a56738267384?auto=format&fit=crop&w=800&q=80" alt="Aircraft details at the airport" loading="lazy"><span class="mw-gallery-caption">Aviation details</span>
+          </button>
+          <button class="mw-gallery-item" type="button" data-image="https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=1500&q=85" data-caption="The runway" aria-label="Open image: The runway">
+            <img src="https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&w=800&q=80" alt="Aircraft on the runway" loading="lazy"><span class="mw-gallery-caption">The runway</span>
+          </button>
+          <button class="mw-gallery-item" type="button" data-image="https://images.unsplash.com/photo-1517479149777-5f3b1511d5ad?auto=format&fit=crop&w=1500&q=85" data-caption="Flight deck" aria-label="Open image: Flight deck">
+            <img src="https://images.unsplash.com/photo-1517479149777-5f3b1511d5ad?auto=format&fit=crop&w=800&q=80" alt="Kokpit letadla" loading="lazy"><span class="mw-gallery-caption">Flight deck</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="mw-section mw-download" id="download">
+      <div class="mw-container">
+        <div class="mw-section-heading mw-reveal">
+          <p class="mw-eyebrow">Take the controls</p>
+          <h2 class="mw-section-title">Download MyWings</h2>
+          <p class="mw-section-subtitle">Choose an available version and review the setup instructions.</p>
+        </div>
+        <div class="mw-download-box mw-reveal">
+          <div class="mw-download-info">
+            <h3>MyWings 0.1.0 Pre-Alpha</h3>
+            <p><strong>License:</strong> GPL-3.0 (Open Source)</p>
+            <p><strong>Platform:</strong> Windows 10/11 · 64-bit</p>
+            <p><strong>Build:</strong> Early development preview</p>
+          </div>
+          <div class="mw-download-actions">
+            <button class="mw-btn mw-btn-primary mw-btn-lg" type="button" data-open="versions-modal"><span class="material-symbols-outlined">download</span>Choose Version</button>
+            <a class="mw-btn mw-btn-secondary mw-btn-lg" href="https://github.com/" target="_blank" rel="noopener noreferrer" data-config-link="repo"><i class="bi bi-github"></i>View Source</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mw-footer">
+    <div class="mw-container mw-footer-content">
+      <div class="mw-footer-brand">
+        <h2>MYWINGS</h2>
+        <p>Open-source flight simulator in development. Built with Unreal Engine 5 for people who love aviation and the freedom of flight.</p>
+      </div>
+      <div class="mw-footer-links">
+        <div class="mw-footer-col"><h4>Navigation</h4><ul><li><a href="#about">About</a></li><li><a href="#features">Features</a></li><li><a href="#fleet">Fleet</a></li><li><a href="#gallery">Gallery</a></li><li><a href="#download">Download</a></li></ul></div>
+        <div class="mw-footer-col"><h4>Project</h4><ul><li><a href="https://github.com/" target="_blank" rel="noopener noreferrer" data-config-link="repo">GitHub</a></li><li><a href="#download">Releases</a></li><li><a href="#about">About the project</a></li></ul></div>
+      </div>
+    </div>
+    <div class="mw-container mw-footer-bottom">
+      <p class="mw-disclaimer">MyWings is an independent open-source project and is not affiliated with Epic Games, Airbus, or Boeing. Gallery images are illustrative photos and may not show the game itself.</p>
+      <div class="mw-copyright"><span>© <span id="current-year">2026</span> MyWings Contributors</span><a href="#top">Back to top ↑</a></div>
+    </div>
+  </footer>
+
+  <!-- Version selection -->
+  <div class="mw-modal" id="versions-modal" role="dialog" aria-modal="true" aria-labelledby="versions-title" aria-hidden="true">
+    <div class="mw-modal-content">
+      <button class="mw-modal-close" type="button" data-close aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      <h2 class="mw-modal-title" id="versions-title">Release Archive</h2>
+      <p class="mw-modal-intro">Choose the build you want to download. The download will open from the configured GitHub Releases link.</p>
+      <article class="mw-version-card">
+        <div class="mw-version-header"><h3>v0.1.0 Pre-Alpha <span class="mw-badge mw-badge-version">Latest release</span></h3><button class="mw-btn mw-btn-primary" id="start-download" type="button"><span class="material-symbols-outlined">download</span>Download .exe</button></div>
+        <p class="mw-version-date"><i class="bi bi-calendar-event"></i> Release build</p>
+        <p class="mw-card-text">The first public pre-alpha release of the project. Its contents and availability depend on the actual file attached to the GitHub release.</p>
+      </article>
+      <p class="mw-modal-note">Note: replace the sample URL in the code below with your actual release link. If no link is configured, the page will notify you instead of pretending a download has started.</p>
+    </div>
+  </div>
+
+  <!-- Download countdown and setup instructions -->
+  <div class="mw-modal" id="download-progress-modal" role="dialog" aria-modal="true" aria-labelledby="download-title" aria-hidden="true">
+    <div class="mw-modal-content">
+      <button class="mw-modal-close" type="button" data-close aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      <div class="mw-progress-view" id="countdown-view">
+        <div class="mw-icon-success"><i class="bi bi-clock-history"></i></div>
+        <h2 class="mw-modal-title" id="download-title">Preparing download…</h2>
+        <p class="mw-modal-intro">The download for version <strong>0.1.0 Pre-Alpha</strong> starts in:</p>
+        <div class="mw-countdown-number" id="countdown-timer" aria-live="polite">3</div>
+        <div class="mw-progress-track" aria-hidden="true"><div class="mw-progress-bar" id="download-progress-bar"></div></div>
+        <p class="mw-modal-intro">Preparing your download link…</p>
+        <button class="mw-btn mw-btn-secondary" type="button" id="cancel-download">Cancel</button>
+      </div>
+      <div class="mw-success-view" id="success-view" hidden>
+        <div class="mw-icon-success"><i class="bi bi-check-lg"></i></div>
+        <h2 class="mw-modal-title">Download link opened</h2>
+        <p class="mw-modal-intro">If the download did not start, use the manual link below.</p>
+        <a class="mw-btn mw-btn-primary" id="manual-download" href="https://github.com/" target="_blank" rel="noopener noreferrer"><span class="material-symbols-outlined">download</span>Try download again</a>
+        <div class="mw-instructions-box">
+          <h3>Quick launch guide</h3>
+          <ol>
+            <li><span class="mw-step">1</span><span>Run the downloaded installer and follow its instructions.</span></li>
+            <li><span class="mw-step">2</span><span>If the build uses streamed geographic data, connect to the internet and wait for it to load.</span></li>
+            <li><span class="mw-step">3</span><span>Choose an available airport and aircraft based on the features in your version.</span></li>
+          </ol>
+        </div>
+        <button class="mw-btn mw-btn-secondary" type="button" data-close style="margin-top:20px;width:100%">Hotovo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trailer: uses Trailer.mp4 by default; set trailerEmbedUrl to use YouTube instead. -->
+  <div class="mw-modal" id="trailer-modal" role="dialog" aria-modal="true" aria-labelledby="trailer-title" aria-hidden="true">
+    <div class="mw-modal-content mw-modal-wide">
+      <button class="mw-modal-close" type="button" data-close aria-label="Close trailer"><i class="bi bi-x-lg"></i></button>
+      <h2 class="mw-modal-title" id="trailer-title">MyWings Trailer</h2>
+      <p class="mw-modal-intro">A first look at the project and its development.</p>
+      <div class="mw-video-frame" id="trailer-frame">
+        <div class="mw-video-placeholder"><div><i class="bi bi-play-circle"></i><p>Place Trailer.mp4 next to this HTML file, or configure a YouTube embed URL in MYWINGS_CONFIG.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Galerie lightbox -->
+  <div class="mw-modal" id="gallery-modal" role="dialog" aria-modal="true" aria-labelledby="gallery-title" aria-hidden="true">
+    <div class="mw-modal-content mw-modal-wide">
+      <button class="mw-modal-close" type="button" data-close aria-label="Close image"><i class="bi bi-x-lg"></i></button>
+      <h2 class="mw-modal-title" id="gallery-title">Gallery</h2>
+      <img class="mw-lightbox-image" id="lightbox-image" src="" alt="">
+      <p class="mw-lightbox-caption" id="lightbox-caption"></p>
+    </div>
+  </div>
+
+  <div class="mw-toast" id="mw-toast" role="status" aria-live="polite"></div>
+
+  <script>
+    /*
+      MYWINGS CONFIG
+      1) downloadUrl: direct link to the .exe in GitHub Releases.
+      2) repoUrl: URL of the actual repository.
+      3) trailerEmbedUrl: optional YouTube embed URL. Leave empty to use Trailer.mp4 next to this HTML file.
+    */
+    const MYWINGS_CONFIG = {
+      downloadUrl: "https://github.com/TVUJ_GITHUB_USERNAME/MyWings/releases/download/v0.1.0-pre-alpha/MyWings-v0.1.0-Setup.exe",
+      repoUrl: "https://github.com/TVUJ_GITHUB_USERNAME/MyWings",
+      trailerEmbedUrl: "",
+      trailerSrc: "Trailer.mp4"
+    };
+
+    (() => {
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+      const modalIds = ["versions-modal", "download-progress-modal", "trailer-modal", "gallery-modal"];
+      let countdownInterval = null;
+      let countdownTimeout = null;
+      let lastFocusedElement = null;
+      let toastTimeout = null;
+
+      $("#current-year").textContent = new Date().getFullYear();
+
+      // Update project links in one place.
+      $$('[data-config-link="repo"]').forEach(link => link.href = MYWINGS_CONFIG.repoUrl || "https://github.com/");
+
+      function toast(message) {
+        const el = $("#mw-toast");
+        el.textContent = message;
+        el.classList.add("is-visible");
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => el.classList.remove("is-visible"), 3400);
+      }
+
+      function openModal(id) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        lastFocusedElement = document.activeElement;
+        modal.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("modal-open");
+        const focusable = $('button:not([disabled]), a[href], iframe', modal);
+        if (focusable) setTimeout(() => focusable.focus(), 20);
+      }
+
+      function closeModal(modal) {
+        if (!modal) return;
+        modal.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
+        if (modal.id === "trailer-modal") {
+          const frame = $("#trailer-frame");
+          if (frame) frame.innerHTML = trailerContent();
+        }
+        if (!$$(".mw-modal.is-open").length) document.body.classList.remove("modal-open");
+        if (lastFocusedElement && typeof lastFocusedElement.focus === "function") lastFocusedElement.focus();
+      }
+
+      function closeAllModals() {
+        $$(".mw-modal.is-open").forEach(closeModal);
+      }
+
+      function trailerContent() {
+        const url = (MYWINGS_CONFIG.trailerEmbedUrl || "").trim();
+
+        // A configured YouTube embed URL takes priority.
+        if (url) {
+          let parsed;
+          try {
+            parsed = new URL(url, document.baseURI);
+          } catch (error) {
+            return '<div class="mw-video-placeholder"><div><i class="bi bi-exclamation-circle"></i><p>The YouTube embed URL is invalid. Check MYWINGS_CONFIG.</p></div></div>';
+          }
+
+          const allowedHosts = ["youtube.com", "www.youtube.com", "www.youtube-nocookie.com"];
+          if (parsed.protocol !== "https:" || !allowedHosts.includes(parsed.hostname) || !parsed.pathname.startsWith("/embed/")) {
+            return '<div class="mw-video-placeholder"><div><i class="bi bi-exclamation-circle"></i><p>Use a YouTube embed URL, such as https://www.youtube-nocookie.com/embed/VIDEO_ID.</p></div></div>';
+          }
+
+          return `<iframe src="${parsed.href}" title="MyWings trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>`;
+        }
+
+        // Default: local video file in the same folder as this HTML page.
+        const videoSrc = (MYWINGS_CONFIG.trailerSrc || "Trailer.mp4").trim();
+        if (!videoSrc) {
+          return '<div class="mw-video-placeholder"><div><i class="bi bi-play-circle"></i><p>Set trailerSrc to Trailer.mp4 or add a YouTube embed URL in MYWINGS_CONFIG.</p></div></div>';
+        }
+
+        return `<video controls playsinline preload="metadata" style="width:100%;height:100%;display:block;background:#000" aria-label="MyWings trailer"><source src="${videoSrc}" type="video/mp4">Your browser does not support video playback.</video>`;
+      }
+      $("#trailer-frame").innerHTML = trailerContent();
+
+      $$("[data-open]").forEach(button => button.addEventListener("click", () => {
+        const id = button.getAttribute("data-open");
+        if (id === "trailer-modal") $("#trailer-frame").innerHTML = trailerContent();
+        openModal(id);
+      }));
+      $$("[data-close]").forEach(button => button.addEventListener("click", () => closeModal(button.closest(".mw-modal"))));
+      $$(".mw-modal").forEach(modal => modal.addEventListener("click", event => {
+        if (event.target === modal) closeModal(modal);
+      }));
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") closeAllModals();
+      });
+
+      function clearCountdown() {
+        if (countdownInterval) clearInterval(countdownInterval);
+        if (countdownTimeout) clearTimeout(countdownTimeout);
+        countdownInterval = null;
+        countdownTimeout = null;
+      }
+
+      function isConfiguredDownloadUrl() {
+        const url = (MYWINGS_CONFIG.downloadUrl || "").trim();
+        return url && !url.includes("TVUJ_GITHUB_USERNAME") && !url.includes("YOUR_GITHUB_USERNAME") && /^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\//i.test(url);
+      }
+
+      function openDownloadTarget() {
+        if (!isConfiguredDownloadUrl()) {
+          closeAllModals();
+          toast("First, set a real downloadUrl in MYWINGS_CONFIG.");
+          return false;
+        }
+        const url = new URL(MYWINGS_CONFIG.downloadUrl);
+        if (url.protocol !== "https:" || url.hostname !== "github.com") {
+          toast("The download URL must be an HTTPS link to GitHub Releases.");
+          return false;
+        }
+        window.open(url.href, "_blank", "noopener,noreferrer");
+        $("#manual-download").href = url.href;
+        return true;
+      }
+
+      $("#start-download").addEventListener("click", () => {
+        if (!isConfiguredDownloadUrl()) {
+          closeModal($("#versions-modal"));
+          toast("The download is not configured yet — update MYWINGS_CONFIG.downloadUrl.");
+          return;
+        }
+        closeModal($("#versions-modal"));
+        $("#countdown-view").hidden = false;
+        $("#success-view").hidden = true;
+        $("#countdown-timer").textContent = "3";
+        $("#download-progress-bar").style.width = "0%";
+        openModal("download-progress-modal");
+        clearCountdown();
+        let remaining = 3;
+        const update = () => {
+          $("#countdown-timer").textContent = String(remaining);
+          $("#download-progress-bar").style.width = `${((3 - remaining) / 3) * 100}%`;
+        };
+        update();
+        countdownInterval = setInterval(() => {
+          remaining -= 1;
+          update();
+          if (remaining <= 0) {
+            clearCountdown();
+            $("#countdown-view").hidden = true;
+            $("#success-view").hidden = false;
+            $("#download-progress-bar").style.width = "100%";
+            openDownloadTarget();
+          }
+        }, 1000);
+      });
+
+      $("#cancel-download").addEventListener("click", () => {
+        clearCountdown();
+        closeModal($("#download-progress-modal"));
+      });
+      $("#manual-download").addEventListener("click", event => {
+        if (!isConfiguredDownloadUrl()) {
+          event.preventDefault();
+          toast("First, set a real downloadUrl in MYWINGS_CONFIG.");
+          return;
+        }
+        event.currentTarget.href = MYWINGS_CONFIG.downloadUrl;
+      });
+
+      $$(".mw-gallery-item").forEach(button => button.addEventListener("click", () => {
+        const image = $("#lightbox-image");
+        image.src = button.dataset.image;
+        image.alt = $("img", button)?.alt || button.dataset.caption || "Galerie MyWings";
+        $("#gallery-title").textContent = button.dataset.caption || "Gallery";
+        $("#gallery-caption").textContent = button.dataset.caption || "";
+        openModal("gallery-modal");
+      }));
+
+      // Reveal-on-scroll animation with a fallback for older browsers and reduced-motion users.
+      const revealItems = $$(".mw-reveal");
+      if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const observer = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12 });
+        revealItems.forEach(item => observer.observe(item));
+      } else {
+        revealItems.forEach(item => item.classList.add("is-visible"));
+      }
+    })();
+  </script>
+</body>
+</html>
