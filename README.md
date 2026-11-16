@@ -1,6 +1,6 @@
 <div align="center">
 
-  # ✈️ MyWings 2026 – Official Website
+  # MyWings 2026 – Official Website
   
   **Official website of MyWings 2026, an open-source flight simulator developed by Amater Studio.**
 
@@ -18,7 +18,7 @@
 
 ---
 
-## 📖 About
+## About
 
 This repository contains the source code for the official **MyWings 2026** website. 
 
@@ -26,18 +26,18 @@ The website serves as the central hub for the community and provides information
 
 ---
 
-## ✨ Features
+## Features
 
-- 🛩️ **Project Overview** – Detailed introduction to the simulator and its core mechanics.
-- 📰 **Development Updates** – Latest news, patch notes, and devlogs from the team.
-- ⬇️ **Game Download Section** – Direct access to the latest builds and releases.
-- 📸 **Screenshots & Media** – High-resolution gallery showcasing the simulator in action.
-- 🏢 **About Amater Studio** – Information about the team behind the project.
-- 📱 **Responsive Design** – Fully optimized for desktop, tablet, and mobile devices.
+- **Project Overview** – Detailed introduction to the simulator and its core mechanics.
+- **Development Updates** – Latest news, patch notes, and devlogs from the team.
+- **Game Download Section** – Direct access to the latest builds and releases.
+- **Screenshots & Media** – High-resolution gallery showcasing the simulator in action.
+- **About Amater Studio** – Information about the team behind the project.
+- **Responsive Design** – Fully optimized for desktop, tablet, and mobile devices.
 
 ---
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 This project is built using pure, lightweight web technologies with zero external dependencies:
 
@@ -47,7 +47,7 @@ This project is built using pure, lightweight web technologies with zero externa
 
 ---
 
-## 🚀 Running Locally
+## Running Locally
 
 You can easily run this website on your local machine without any build tools or servers:
 
@@ -66,7 +66,7 @@ You can easily run this website on your local machine without any build tools or
 
 ---
 
-## 📊 Project Details
+## Project Details
 
 **MyWings 2026** is an independent open-source flight simulator currently in active development.
 
@@ -74,12 +74,12 @@ You can easily run this website on your local machine without any build tools or
 | :--- | :--- |
 | **Project** | MyWings 2026 |
 | **Developer** | Amater Studio |
-| **Status** | 🚧 In Development |
-| **Website** | [Official MyWings Website](#) *(Add your URL here)* |
+| **Status** | In Development |
+| **Website** | [Official MyWings Website](#) *https://amaterstudio-official.github.io/MyWingsOfficialSite/* |
 
 ---
 
-## 📄 License
+## License
 
 See the [LICENSE](LICENSE) file for licensing information regarding this website and its source code.
 
